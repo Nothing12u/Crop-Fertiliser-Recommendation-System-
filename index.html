@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Crop & Fertiliser Recommendation System</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background: #f9f9f9;
+  }
+  h1 {
+    text-align: center;
+    color: #2f6627;
+  }
+  form {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 5px;
+    box-shadow: 0 0 8px #ccc;
+  }
+  label {
+    display: block;
+    margin-top: 1rem;
+    font-weight: bold;
+    color: #344634;
+  }
+  input[type="number"], select {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.3rem;
+    font-size: 1rem;
+    box-sizing: border-box;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+  }
+  button {
+    margin-top: 1.5rem;
+    background-color: #2f6627;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.2rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  button:hover {
+    background-color: #25521b;
+  }
+  #result {
+    margin-top: 2rem;
+    background: #e6f5e6;
+    padding: 1rem;
+    border-radius: 5px;
+    border: 1px solid #2f6627;
+  }
+  #error {
+    margin-top: 1rem;
+    color: red;
+  }
+</style>
+</head>
+<body>
+<h1>Crop & Fertiliser Recommendation System</h1>
+<form id="recommendationForm">
+  <label for="nitrogen">Nitrogen Content (N) (in ppm):</label>
+  <input type="number" id="nitrogen" name="nitrogen" min="0" max="1000" required />
+
+  <label for="phosphorus">Phosphorus Content (P) (in ppm):</label>
+  <input type="number" id="phosphorus" name="phosphorus" min="0" max="1000" required />
+
+  <label for="potassium">Potassium Content (K) (in ppm):</label>
+  <input type="number" id="potassium" name="potassium" min="0" max="1000" required />
+
+  <label for="ph">Soil pH Value:</label>
+  <input type="number" id="ph" name="ph" min="3.5" max="9" step="0.1" required />
+
+  <label for="soilType">Soil Type:</label>
+  <select id="soilType" name="soilType" required>
+    <option value="">Select Soil Type</option>
+    <option value="loamy">Loamy</option>
+    <option value="sandy">Sandy</option>
+    <option value="clay">Clay</option>
+    <option value="silty">Silty</option>
+    <option value="peaty">Peaty</option>
+    <option value="chalky">Chalky</option>
+  </select>
+
+  <button type="submit">Get Recommendation</button>
+</form>
+
+<div id="result" aria-live="polite"></div>
+<div id="error" role="alert"></div>
+
+<script>
+  const form = document.getElementById('recommendationForm');
+  const resultDiv = document.getElementById('result');
+  const errorDiv = document.getElementById('error');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    resultDiv.innerHTML = "";
+    errorDiv.innerHTML = "";
+
+    const inputs = {
+      nitrogen: Number(form.nitrogen.value),
+      phosphorus: Number(form.phosphorus.value),
+      potassium: Number(form.potassium.value),
+      ph: Number(form.ph.value),
+      soilType: form.soilType.value,
+    };
+
+    try {
+      const response = await fetch('http://localhost:5000/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inputs)
+      });
+
+      if (!response.ok) throw new Error('Server error: ' + response.statusText);
+      const data = await response.json();
+
+      let html = `<h2>Recommended Crop: <span style="color:#2f6627;">${data.crop}</span></h2>`;
+      html += "<h3>Fertiliser Recommendations:</h3><ul>";
+      data.fertilisers.forEach(f => { html += `<li>${f}</li>`; });
+      html += "</ul>";
+
+      resultDiv.innerHTML = html;
+    } catch (err) {
+      errorDiv.textContent = "Error: " + err.message;
+    }
+  });
+</script>
+</body>
+</html>
